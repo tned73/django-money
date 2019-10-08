@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
 from django.db import models
-from django.db.models import F, Field, Func, Value
+from django.db.models import F, Field, Func, Value, NOT_PROVIDED
 from django.db.models.expressions import BaseExpression
 from django.db.models.signals import class_prepared
 from django.utils.functional import cached_property
@@ -193,6 +193,8 @@ class MoneyField(models.DecimalField):
         Field.creation_counter += 1
 
     def setup_default(self, default, default_currency, nullable):
+        if default is None and not nullable:
+            return NOT_PROVIDED
         if isinstance(default, string_types):
             try:
                 # handle scenario where default is formatted like:
@@ -281,7 +283,7 @@ class MoneyField(models.DecimalField):
         defaults.update(kwargs)
         defaults["currency_choices"] = self.currency_choices
         defaults["default_currency"] = self.default_currency
-        if self.default is not None:
+        if self.default is not None and self.default is not NOT_PROVIDED:
             defaults["default_amount"] = self.default.amount
         return super(MoneyField, self).formfield(**defaults)
 
@@ -292,7 +294,9 @@ class MoneyField(models.DecimalField):
     def deconstruct(self):
         name, path, args, kwargs = super(MoneyField, self).deconstruct()
 
-        if self.default is None:
+        if self.default is NOT_PROVIDED:
+            pass
+        elif self.default is None:
             del kwargs["default"]
         else:
             kwargs["default"] = self.default.amount
