@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on May 7, 2011
 
@@ -12,7 +11,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.migrations.writer import MigrationWriter
 from django.db.models import Case, F, Func, Q, Value, When
-from django.utils.six import PY2
 from django.utils.translation import override
 
 import pytest
@@ -458,6 +456,26 @@ class TestFExpressions:
 
 
 class TestExpressions:
+    @pytest.mark.skipif(VERSION[:2] < (2, 2), reason="skipping tests for Django < 2.2")
+    def test_bulk_update(self):
+        assert ModelWithVanillaMoneyField.objects.filter(integer=0).count() == 0
+        assert ModelWithVanillaMoneyField.objects.filter(integer=1).count() == 0
+        ModelWithVanillaMoneyField.objects.create(money=Money(1, "USD"), integer=0)
+        ModelWithVanillaMoneyField.objects.create(money=Money(2, "USD"), integer=1)
+        first_inst = ModelWithVanillaMoneyField.objects.get(integer=0)
+        second_inst = ModelWithVanillaMoneyField.objects.get(integer=1)
+        assert first_inst.money == Money(1, "USD")
+        assert second_inst.money == Money(2, "USD")
+        first_inst.money = Money(3, "RUB")
+        second_inst.money = Money(4, "UAH")
+        second_inst.second_money = Money(5, "BYN")
+        ModelWithVanillaMoneyField.objects.bulk_update(
+            [first_inst, second_inst], ("money", "money_currency", "second_money", "second_money_currency")
+        )
+        assert ModelWithVanillaMoneyField.objects.get(integer=0).money == Money(3, "RUB")
+        assert ModelWithVanillaMoneyField.objects.get(integer=1).money == Money(4, "UAH")
+        assert ModelWithVanillaMoneyField.objects.get(integer=1).second_money == Money(5, "BYN")
+
     def test_conditional_update(self):
         ModelWithVanillaMoneyField.objects.bulk_create(
             (
@@ -591,10 +609,7 @@ def test_different_hashes():
 
 
 def test_migration_serialization():
-    if PY2:
-        serialized = "djmoney.money.Money(100, b'GBP')"
-    else:
-        serialized = "djmoney.money.Money(100, 'GBP')"
+    serialized = "djmoney.money.Money(100, 'GBP')"
     assert MigrationWriter.serialize(Money(100, "GBP")) == (serialized, {"import djmoney.money"})
 
 
@@ -702,3 +717,15 @@ class TestSharedCurrency:
         instance = ModelWithSharedCurrency.objects.create(first=value, second=value)
         assert instance.first == value
         assert instance.second == value
+
+
+def test_order_by():
+    def extract_data(instance):
+        return instance.money, instance.integer
+
+    ModelWithVanillaMoneyField.objects.create(money=Money(10, "AUD"), integer=2)
+    ModelWithVanillaMoneyField.objects.create(money=Money(10, "AUD"), integer=1)
+    ModelWithVanillaMoneyField.objects.create(money=Money(10, "USD"), integer=3)
+
+    qs = ModelWithVanillaMoneyField.objects.order_by("integer").filter(money=Money(10, "AUD"))
+    assert list(map(extract_data, qs)) == [(Money(10, "AUD"), 1), (Money(10, "AUD"), 2)]
