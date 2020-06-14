@@ -167,7 +167,7 @@ class MoneyField(models.DecimalField):
         name=None,
         max_digits=None,
         decimal_places=DECIMAL_PLACES,
-        default=None,
+        default=NOT_PROVIDED,
         default_currency=DEFAULT_CURRENCY,
         currency_choices=CURRENCY_CHOICES,
         currency_max_length=3,
@@ -207,7 +207,7 @@ class MoneyField(models.DecimalField):
             default = Money(default, default_currency)
         elif isinstance(default, OldMoney):
             default.__class__ = Money
-        if default is not None and not isinstance(default, Money):
+        if default is not None and default is not NOT_PROVIDED and not isinstance(default, Money):
             raise ValueError("default value must be an instance of Money, is: %s" % default)
         return default
 
