@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
 from django.db import models
-from django.db.models import F, Field, Func, Value, NOT_PROVIDED
+from django.db.models import NOT_PROVIDED, F, Field, Func, Value
 from django.db.models.expressions import BaseExpression
 from django.db.models.signals import class_prepared
 from django.utils.encoding import smart_str

@@ -6,7 +6,6 @@ Created on May 7, 2011
 import datetime
 from copy import copy
 
-from mixer.backend.django import mixer
 from django import VERSION
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -15,6 +14,7 @@ from django.db.models import Case, F, Func, Q, Value, When
 from django.utils.translation import override
 
 import pytest
+from mixer.backend.django import mixer
 
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
