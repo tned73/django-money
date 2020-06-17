@@ -14,10 +14,10 @@ from django.db.models import Case, F, Func, Q, Value, When
 from django.utils.translation import override
 
 import pytest
-from mixer.backend.django import mixer
 
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
+from mixer.backend.django import mixer
 from moneyed import Money as OldMoney
 
 from .testapp.models import (
