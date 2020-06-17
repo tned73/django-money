@@ -6,6 +6,7 @@ Created on May 7, 2011
 import datetime
 from copy import copy
 
+from mixer.backend.django import mixer
 from django import VERSION
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -729,3 +730,9 @@ def test_order_by():
 
     qs = ModelWithVanillaMoneyField.objects.order_by("integer").filter(money=Money(10, "AUD"))
     assert list(map(extract_data, qs)) == [(Money(10, "AUD"), 1), (Money(10, "AUD"), 2)]
+
+
+def test_mixer_blend():
+    instance = mixer.blend(ModelWithTwoMoneyFields)
+    assert isinstance(instance.amount1, Money)
+    assert isinstance(instance.amount2, Money)

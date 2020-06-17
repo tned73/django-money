@@ -177,7 +177,7 @@ class MoneyField(models.DecimalField):
     ):
         nullable = kwargs.get("null", False)
         default = self.setup_default(default, default_currency, nullable)
-        if not default_currency and default is not None:
+        if not default_currency and default is not NOT_PROVIDED:
             default_currency = default.currency
 
         self.currency_max_length = currency_max_length
@@ -292,8 +292,6 @@ class MoneyField(models.DecimalField):
 
         if self.default is NOT_PROVIDED:
             pass
-        elif self.default is None:
-            del kwargs["default"]
         else:
             kwargs["default"] = self.default.amount
         if self.default_currency is not None and self.default_currency != DEFAULT_CURRENCY:
